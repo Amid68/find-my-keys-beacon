@@ -111,12 +111,12 @@ void Reset_Handler(void)
     /* Copy .data (initialised globals) from its flash load address into RAM. */
     uint32_t *src = &_sidata;
     uint32_t *dst = &_sdata;
-    while (dst < &_edata) {
+    while ((uintptr_t)dst < (uintptr_t)&_edata) {
         *dst++ = *src++;
     }
 
     /* Zero .bss (uninitialised globals). */
-    for (dst = &_sbss; dst < &_ebss; dst++) {
+    for (dst = &_sbss; (uintptr_t)dst < (uintptr_t)&_ebss; dst++) {
         *dst = 0;
     }
 
