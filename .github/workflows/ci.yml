@@ -1,0 +1,95 @@
+# =============================================================================
+# CI for the Find My Keys beacon.
+#
+# Firmware CI has one job that userland CI does not: nobody can "run the app"
+# in the cloud - there is no nRF52840 attached to the runner. So the pipeline
+# proves everything that CAN be proven without hardware:
+#
+#   build  - the firmware cross-compiles warning-clean (-Werror) and links
+#            within the chip's flash/RAM budget. The .hex artifact it uploads
+#            is exactly what you would flash - build once, promote everywhere.
+#   test   - the SipHash core (the one part you can't eyeball with a phone)
+#            passes the published reference vectors, compiled natively.
+#            The Python verifier's independent implementation is checked too.
+#   lint   - cppcheck static analysis over all firmware sources.
+#
+# Security notes (the parts worth copying into other projects):
+#   - `permissions: contents: read` - the workflow token can't push, tag or
+#     touch releases even if a step is compromised.
+#   - actions are pinned to major versions from the official orgs only.
+#   - the artifact ships with a SHA-256 manifest so a flashed image can be
+#     traced back to the exact commit that produced it (supply-chain 101).
+# =============================================================================
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ARM cross toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc-arm-none-eabi
+
+      - name: Build firmware
+        run: make
+
+      - name: Report size
+        run: make size
+
+      - name: Hash artifacts (provenance)
+        run: |
+          cd build
+          sha256sum firmware.elf firmware.hex firmware.bin | tee SHA256SUMS
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ github.sha }}
+          path: |
+            build/firmware.elf
+            build/firmware.hex
+            build/firmware.bin
+            build/firmware.map
+            build/SHA256SUMS
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: SipHash reference vectors (C, same file as the target builds)
+        run: make test
+
+      - name: SipHash reference vectors (independent Python implementation)
+        run: |
+          python3 tools/verify_beacon.py \
+            --mac e2:2a:8f:50:f5:a3 --data 010100000085221e92
+      - name: Python verifier rejects a forged tag
+        run: |
+          if python3 tools/verify_beacon.py \
+               --mac e2:2a:8f:50:f5:a3 --data 010100000085221e93; then
+            echo "forged tag was accepted - FAIL"; exit 1
+          fi
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cppcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cppcheck
+
+      - name: Static analysis
+        run: make lint

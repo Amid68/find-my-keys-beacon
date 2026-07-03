@@ -1,0 +1,15 @@
+# Matches the hand-written style of this codebase: Linux-kernel-ish braces,
+# 4-space indent, 80-100 column comfort zone, pointer binds to the name.
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 80
+BreakBeforeBraces: Linux
+PointerAlignment: Right
+AllowShortFunctionsOnASingleLine: All
+AllowShortCaseLabelsOnASingleLine: true
+AlignTrailingComments: true
+AlignConsecutiveMacros: AcrossEmptyLines
+SortIncludes: false
+IndentCaseLabels: false
+SpaceAfterCStyleCast: false
+KeepEmptyLinesAtTheStartOfBlocks: false

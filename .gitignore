@@ -1,0 +1,12 @@
+# Build outputs
+build/
+tools/build/
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor droppings
+*.swp
+.cache/
+compile_commands.json
