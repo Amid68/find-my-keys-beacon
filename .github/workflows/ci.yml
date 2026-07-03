@@ -33,7 +33,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.3.0
 
       - name: Install ARM cross toolchain
         run: |
@@ -52,7 +52,7 @@ jobs:
           sha256sum firmware.elf firmware.hex firmware.bin | tee SHA256SUMS
 
       - name: Upload firmware artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.5.0
         with:
           name: firmware-${{ github.sha }}
           path: |
@@ -65,7 +65,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.3.0
 
       - name: SipHash reference vectors (C, same file as the target builds)
         run: make test
@@ -84,7 +84,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.3.0
 
       - name: Install cppcheck
         run: |
